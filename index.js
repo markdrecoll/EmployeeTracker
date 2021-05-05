@@ -6,24 +6,29 @@ const whatWouldUserLikeToDoArray = [
     {
         type: 'list',
         message: 'What would you like to do?',
-        choices: [  'View All Employees',
-                    'View All Employees by Department',
-                    'View All Employees by Manager',
+        choices: [  'View Employees',
+                    'View Employees by Department',
+                    'View Employees by Manager',
                     'Add Employee',
+                    'Add Department',
                     'Remove Employee',
                     'Update Employee Role',
-                    'Update Employee Manager'   ],
+                    'Update Employee Manager',
+                    'Exit'],
         name: 'whatWouldUserLikeToDo'
     }
 ]
 
-function init() {
+function userInteractionPrompt() {
     inquirer
         .prompt(whatWouldUserLikeToDoArray)
         .then((response) => {
-            console.log("User choice selected.");
+            if(response.whatWouldUserLikeToDo !== 'Exit'){
+                console.log("User choice selected.");
+                userInteractionPrompt();
+            }
         }
         );
 }
 
-init();
+userInteractionPrompt();
