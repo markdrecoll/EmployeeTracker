@@ -48,8 +48,8 @@ const addEmployeeQuestions = [
     {
         type: 'list',
         message: "Who is the employee's manager?",
-        // choices: ['fdaf', 'fasdf'],
-        choices: availableEmployeesOnLoad,
+        choices: ['fdaf', 'fasdf'],
+        // choices: availableEmployeesOnLoad,
         name: 'employeeManagerInput'
     }
 ]
@@ -59,15 +59,17 @@ async function getAllEmployees() {
         const employees = await connection.query('SELECT * FROM employee', (err, res) => {
             if (err) throw err;
             // res.data? is all the employees;
+            // console.log("res from data",res);
             const employees = res.map(employee => {
                 return `${employee.id}: ${employee.first_name} ${employee.last_name}`
             });
+            console.log(employees);
+            // return employees;
+            if (!employees) {
+                console.log('no employees error')
+            }
             return employees;
         })
-        if (!employees) {
-            console.log('no employees error')
-        }
-        return employees;
     } catch (err) {
         throw err;
     }
@@ -76,18 +78,20 @@ async function getAllEmployees() {
 function showAllEmployees() {
     const employees = getAllEmployees();
     console.log(employees);
+
 }
 
-function addEmployee(){
+async function addEmployee(){
+    let allEmployees = await getAllEmployees();
+    console.log(allEmployees);
     inquirer
         .prompt(addEmployeeQuestions)
         .then((response) =>{
-
-            console.log(response.employeeFirstNameInput + " " + response.employeeLastNameInput)
+console.log(response);
+            // console.log(response.employeeFirstNameInput + " " + response.employeeLastNameInput)
         }).catch(err => {
             console.log(err);
 
-        
         })
 }
 
