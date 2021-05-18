@@ -26,9 +26,13 @@ const whatWouldUserLikeToDoArray = [
         name: 'whatWouldUserLikeToDo'
     }
 ]
+
+
 const availableEmployeesOnLoad = getAllEmployees();
 console.log(availableEmployeesOnLoad);
-const addEmployeeQuestions = [
+
+
+let addEmployeeQuestions = [
     {
         type: 'input',
         message: "What is the employee's first name?",
@@ -48,8 +52,7 @@ const addEmployeeQuestions = [
     {
         type: 'list',
         message: "Who is the employee's manager?",
-        choices: ['fdaf', 'fasdf'],
-        // choices: availableEmployeesOnLoad,
+        choices: [],
         name: 'employeeManagerInput'
     }
 ]
@@ -58,21 +61,22 @@ async function getAllEmployees() {
     try {
         const employees = await connection.query('SELECT * FROM employee', (err, res) => {
             if (err) throw err;
-            // res.data? is all the employees;
-            // console.log("res from data",res);
-            const employees = res.map(employee => {
-                return `${employee.id}: ${employee.first_name} ${employee.last_name}`
-            });
+
+            addEmployeeQuestions[3].choices = [];
+            for(let i=0; i<res.length; i++){
+                addEmployeeQuestions[3].choices.push(`${res[i].first_name} ${res[i].last_name}`);
+            }
             console.log(employees);
-            // return employees;
             if (!employees) {
                 console.log('no employees error')
             }
             return employees;
         })
+
     } catch (err) {
         throw err;
     }
+    
 }
 
 function showAllEmployees() {
@@ -82,12 +86,16 @@ function showAllEmployees() {
 }
 
 async function addEmployee(){
-    let allEmployees = await getAllEmployees();
+    let allEmployees = getAllEmployees();
     console.log(allEmployees);
+    addEmployeeQuestions[3].choices = allEmployees;
+
+    // addEmployeeQuestions[3].choices = await getAllEmployees();
+
     inquirer
         .prompt(addEmployeeQuestions)
         .then((response) =>{
-console.log(response);
+        console.log(response);
             // console.log(response.employeeFirstNameInput + " " + response.employeeLastNameInput)
         }).catch(err => {
             console.log(err);
