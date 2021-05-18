@@ -1,37 +1,35 @@
+// get dependencies such as inquirer and mysql
 const inquirer = require('inquirer');
 const mysql = require('mysql');
 
+// this creates a connection to the local database
 const connection = mysql.createConnection({
-    host:'localhost',
+    host: 'localhost',
     port: 3306,
-    user:'root',
+    user: 'root',
     password: '19cavalryarcher',
-    database:'employeetracker_db'
+    database: 'employeetracker_db'
 })
 
-// the options for adding another employee or finish adding
+// these are the options for what action the user wants to take
 const whatWouldUserLikeToDoArray = [
     {
         type: 'list',
         message: 'What would you like to do?',
-        choices: [  'View Employees',
-                    'View Employees by Department',
-                    'View Employees by Manager',
-                    'Add Employee',
-                    'Add Department',
-                    'Remove Employee',
-                    'Update Employee Role',
-                    'Update Employee Manager',
-                    'Exit'],
+        choices: ['View Employees',
+            'View Employees by Department',
+            'View Employees by Manager',
+            'Add Employee',
+            'Add Department',
+            'Remove Employee',
+            'Update Employee Role',
+            'Update Employee Manager',
+            'Exit'],
         name: 'whatWouldUserLikeToDo'
     }
 ]
 
-
-const availableEmployeesOnLoad = getAllEmployees();
-console.log(availableEmployeesOnLoad);
-
-
+// this is an array of questions when adding a new employee
 let addEmployeeQuestions = [
     {
         type: 'input',
@@ -57,49 +55,53 @@ let addEmployeeQuestions = [
     }
 ]
 
+// this function gets all the employees
 async function getAllEmployees() {
     try {
         const employees = await connection.query('SELECT * FROM employee', (err, res) => {
             if (err) throw err;
 
+            // the fourth add employee question has the choices array populated with employees
             addEmployeeQuestions[3].choices = [];
-            for(let i=0; i<res.length; i++){
+
+            // each employee is pushed to the manager question of the add employee questions
+            for (let i = 0; i < res.length; i++) {
                 addEmployeeQuestions[3].choices.push(`${res[i].first_name} ${res[i].last_name}`);
             }
-            console.log(employees);
+
+            // returns an error if there are no employees
             if (!employees) {
                 console.log('no employees error')
             }
+
             return employees;
         })
-
     } catch (err) {
         throw err;
     }
-    
 }
 
+// this function displays all the employees
 function showAllEmployees() {
     const employees = getAllEmployees();
     console.log(employees);
-
+    // return employees;
 }
 
-async function addEmployee(){
+// this function adds an employee
+async function addEmployee() {
+
+    // get all available employees, and make that the choices array
     let allEmployees = getAllEmployees();
-    console.log(allEmployees);
     addEmployeeQuestions[3].choices = allEmployees;
 
-    // addEmployeeQuestions[3].choices = await getAllEmployees();
-
+    // ask the user for info on the employee being added
     inquirer
         .prompt(addEmployeeQuestions)
-        .then((response) =>{
-        console.log(response);
-            // console.log(response.employeeFirstNameInput + " " + response.employeeLastNameInput)
+        .then((response) => {
+            console.log(response);
         }).catch(err => {
             console.log(err);
-
         })
 }
 
@@ -107,16 +109,19 @@ function userInteractionPrompt() {
     inquirer
         .prompt(whatWouldUserLikeToDoArray)
         .then((response) => {
-            if(response.whatWouldUserLikeToDo === 'Add Employee'){
+
+            // user selects what action for the application to take
+            if (response.whatWouldUserLikeToDo === 'Add Employee') {
                 addEmployee();
-            }else if(response.whatWouldUserLikeToDo === 'View All Employees'){
-                showAllEmployees();            
-            }else if(response.whatWouldUserLikeToDo !== 'Exit'){
-                console.log("User choice selected.");
+            } else if (response.whatWouldUserLikeToDo === 'View All Employees') {
+                showAllEmployees();
+            } else if (response.whatWouldUserLikeToDo !== 'Exit') {
+                // console.log("User choice selected.");
                 userInteractionPrompt();
             }
         }
         );
 }
 
+// initiate program by prompting the user
 userInteractionPrompt();
