@@ -1,7 +1,7 @@
 // get dependencies such as inquirer and mysql
 const inquirer = require('inquirer');
 const mysql = require('mysql');
-
+//let allEmp = [];
 // this creates a connection to the local database
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -34,24 +34,24 @@ let addEmployeeQuestions = [
     {
         type: 'input',
         message: "What is the employee's first name?",
-        name: 'employeeFirstNameInput'
+        name: 'first_name'
     },
     {
         type: 'input',
         message: "What is the employee's last name?",
-        name: 'employeeLastNameInput'
+        name: 'last_name'
     },
     {
         type: 'list',
         message: "What is the employee's role?",
-        choices: ['Sales Lead', 'Salesperson', 'Lead Engineer', 'Software Engineer', 'Accountant', 'Legal Team Lead', 'Attorney'],
-        name: 'employeeRoleInput'
+        choices: ['1.Sales Lead', '2.Salesperson', '3.Lead Engineer', '4. Software Engineer', '5. Accountant', '6. Legal Team Lead', '7. Attorney'],
+        name: 'role_id'
     },
     {
         type: 'list',
         message: "Who is the employee's manager?",
         choices: [],
-        name: 'employeeManagerInput'
+        name: 'manager_id'
     }
 ]
 
@@ -63,18 +63,19 @@ async function getAllEmployees() {
 
             // the fourth add employee question has the choices array populated with employees
             addEmployeeQuestions[3].choices = [];
-
+            
             // each employee is pushed to the manager question of the add employee questions
             for (let i = 0; i < res.length; i++) {
-                addEmployeeQuestions[3].choices.push(`${res[i].first_name} ${res[i].last_name}`);
+                
+                addEmployeeQuestions[3].choices.push(`${i+1}.${res[i].first_name} ${res[i].last_name}`);
             }
-
+           // allEmp = addEmployeeQuestions[3].choices;
             // returns an error if there are no employees
             if (!employees) {
                 console.log('no employees error')
             }
 
-            return employees;
+            //return employees;
         })
     } catch (err) {
         throw err;
@@ -83,8 +84,16 @@ async function getAllEmployees() {
 
 // this function displays all the employees
 function showAllEmployees() {
-    const employees = getAllEmployees();
-    console.log(employees);
+    //await getAllEmployees();
+   connection.query('Select * from employee', (err, res)=>{
+        if (err){
+            console.log(err)
+        }else {
+            console.table(res)
+        }
+    })
+   // console.log(employees);
+   // console.table(allEmp);
     // return employees;
 }
 
@@ -99,7 +108,23 @@ async function addEmployee() {
     inquirer
         .prompt(addEmployeeQuestions)
         .then((response) => {
-            console.log(response);
+
+            let newEmployee = {
+                first_name: response.first_name,
+                last_name: response.last_name,
+                role_id: parseInt(response.role_id.charAt(0)),
+                manager_id: parseInt(response.manager_id.charAt(0))
+            }
+
+            connection.query("INSERT INTO employee SET ?", newEmployee, (err, res)=>{
+                if(err){
+                    console.log(err)
+                }else {
+                    console.log('Employee Added');
+                  
+                }
+            })
+
         }).catch(err => {
             console.log(err);
         })
@@ -109,11 +134,11 @@ function userInteractionPrompt() {
     inquirer
         .prompt(whatWouldUserLikeToDoArray)
         .then((response) => {
-
+            console.log(response)
             // user selects what action for the application to take
             if (response.whatWouldUserLikeToDo === 'Add Employee') {
                 addEmployee();
-            } else if (response.whatWouldUserLikeToDo === 'View All Employees') {
+            } else if (response.whatWouldUserLikeToDo === 'View Employees') {
                 showAllEmployees();
             } else if (response.whatWouldUserLikeToDo !== 'Exit') {
                 // console.log("User choice selected.");
