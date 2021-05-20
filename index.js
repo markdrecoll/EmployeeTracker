@@ -1,6 +1,7 @@
 // get dependencies such as inquirer and mysql
 const inquirer = require('inquirer');
 const mysql = require('mysql');
+const util = require('util');
 //let allEmp = [];
 // this creates a connection to the local database
 const connection = mysql.createConnection({
@@ -10,7 +11,19 @@ const connection = mysql.createConnection({
     password: '19cavalryarcher',
     database: 'employeetracker_db'
 })
+connection.connect();
+connection.query = util.promisify(connection.query);
 
+
+
+let showEmployeeByDepartmentQuestion = [
+    {
+        type: 'list',
+        message: "What department do you want employees from?",
+        name: 'department_id',
+        choices: []
+    }
+]
 // these are the options for what action the user wants to take
 const whatWouldUserLikeToDoArray = [
     {
@@ -93,6 +106,7 @@ function showAllEmployees() {
             console.table(res)
         }
     })
+    userInteractionPrompt();
 }
 
 ////////////////////////////////////////////////////////// EMPLOYEE BY DEPARTMENT
@@ -106,7 +120,7 @@ async function getAllDepartments() {
 
             // the fourth add employee question has the choices array populated with employees
             showEmployeeByDepartmentQuestion.choices = [];
-            
+            //console.log('Here is the list of all the departments', res)
             // each department is pushed to the choices
             for (let i = 0; i < res.length; i++) {
                 
@@ -123,38 +137,67 @@ async function getAllDepartments() {
     } catch (err) {
         throw err;
     }
+//    console.log(await connection.query('SELECT * FROM department'));
 }
 
-let showEmployeeByDepartmentQuestion = [
-    {
-        type: 'list',
-        message: "What department do you want employees from?",
-        name: 'department_id',
-        choices: []
-    }
-]
-
-addEmployeeQuestions[3].choices = allEmployees;
 
 // this function displays all the employees
 async function showAllEmployeesByDepartment() {
+    // console.log('Before getting all departments')
+    // //const departments = await getAllDepartments();
+    // await getAllDepartments();
 
-    let allDepartments = getAllDepartments();
-    showEmployeeByDepartmentQuestion.choices = allDepartments;
+    try {
+        const departments = await connection.query('SELECT * FROM department', (err, res) => {
+            if (err) throw err;
 
-    inquirer
-        .prompt(showEmployeeByDepartmentQuestion)
-        .then((response) => {
-            let departmentChoice = parseInt(response.charAt(0));
-        }
+            // the fourth add employee question has the choices array populated with employees
+            showEmployeeByDepartmentQuestion.choices = [];
+            //console.log('Here is the list of all the departments', res)
+            // each department is pushed to the choices
+            for (let i = 0; i < res.length; i++) {
+                
+                showEmployeeByDepartmentQuestion.choices.push({name: `${res[i].name}`, value: `${res[i].id}`});
+            }
+           // allEmp = addEmployeeQuestions[3].choices;
+            // returns an error if there are no employees
+            if (!departments) {
+                console.log('no departments error')
+            }
 
-    connection.query(`Select * from employee where department_id = ${departmentChoice}`, (err, res)=>{
-         if (err){
-             console.log(err);
-         }else {
-            console.table(res);
-         }
-    })
+            
+
+
+        })
+    } catch (err) {
+        throw err;
+    }
+
+    console.log(showEmployeeByDepartmentQuestion.choices);
+
+    let departmentChoice;
+
+    // inquirer
+    //     .prompt(showEmployeeByDepartmentQuestion)
+    //     .then((response) => {            
+    //         console.log(response);
+    //         departmentChoice = parseInt(response.charAt(0));
+    //     })
+    //     .catch((err) => {
+    //         console.log(err);
+    //     })
+
+    // connection.query(`Select * from employee where id = ${departmentChoice}`, (err, res)=>{
+    //      if (err){
+    //          console.log(err);
+    //      }else {
+    //         console.table(res);
+    //      }
+    // })
+
+    userInteractionPrompt();
+
+
  }
 
  //////////////////////////////////////////// END OF EMPLOYEE BY DEPARTMENT
@@ -225,6 +268,7 @@ async function addEmployee() {
         }).catch(err => {
             console.log(err);
         })
+        // userInteractionPrompt();
 }
 
 function userInteractionPrompt() {
@@ -237,8 +281,8 @@ function userInteractionPrompt() {
                 showAllEmployees();
             } 
             
-            else if (response.whatWouldUserLikeToDo === 'View Employees by Role') {
-                showAllEmployeesByDepartment(x);
+            else if (response.whatWouldUserLikeToDo === 'View Employees by Department') {
+                showAllEmployeesByDepartment();
 
 
             } else if (response.whatWouldUserLikeToDo === 'View Employees by Manager') {
