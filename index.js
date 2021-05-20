@@ -19,6 +19,8 @@ const whatWouldUserLikeToDoArray = [
         choices: ['View Employees',
             'View Employees by Department',
             'View Employees by Manager',
+            'View All Roles',
+            'View All Departments',
             'Add Employee',
             'Add Department',
             'Remove Employee',
@@ -84,7 +86,6 @@ async function getAllEmployees() {
 
 // this function displays all the employees
 function showAllEmployees() {
-    //await getAllEmployees();
    connection.query('Select * from employee', (err, res)=>{
         if (err){
             console.log(err)
@@ -92,10 +93,106 @@ function showAllEmployees() {
             console.table(res)
         }
     })
-   // console.log(employees);
-   // console.table(allEmp);
-    // return employees;
 }
+
+////////////////////////////////////////////////////////// EMPLOYEE BY DEPARTMENT
+// THIS IS BEING WORKED ON
+
+// this function gets all the employees
+async function getAllDepartments() {
+    try {
+        const departments = await connection.query('SELECT * FROM department', (err, res) => {
+            if (err) throw err;
+
+            // the fourth add employee question has the choices array populated with employees
+            showEmployeeByDepartmentQuestion.choices = [];
+            
+            // each department is pushed to the choices
+            for (let i = 0; i < res.length; i++) {
+                
+                showEmployeeByDepartmentQuestion.choices.push(`${i+1}.${res[i].name}`);
+            }
+           // allEmp = addEmployeeQuestions[3].choices;
+            // returns an error if there are no employees
+            if (!departments) {
+                console.log('no departments error')
+            }
+
+            //return employees;
+        })
+    } catch (err) {
+        throw err;
+    }
+}
+
+let showEmployeeByDepartmentQuestion = [
+    {
+        type: 'list',
+        message: "What department do you want employees from?",
+        name: 'department_id',
+        choices: []
+    }
+]
+
+addEmployeeQuestions[3].choices = allEmployees;
+
+// this function displays all the employees
+async function showAllEmployeesByDepartment() {
+
+    let allDepartments = getAllDepartments();
+    showEmployeeByDepartmentQuestion.choices = allDepartments;
+
+    inquirer
+        .prompt(showEmployeeByDepartmentQuestion)
+        .then((response) => {
+            let departmentChoice = parseInt(response.charAt(0));
+        }
+
+    connection.query(`Select * from employee where department_id = ${departmentChoice}`, (err, res)=>{
+         if (err){
+             console.log(err);
+         }else {
+            console.table(res);
+         }
+    })
+ }
+
+ //////////////////////////////////////////// END OF EMPLOYEE BY DEPARTMENT
+
+ // this function displays all the employees
+function showAllEmployeesByRole(role) {
+    connection.query(`Select * from employee where role_id = ${role}`, (err, res)=>{
+         if (err){
+             console.log(err)
+         }else {
+             console.table(res)
+         }
+     })
+ }
+
+ ////////////////////////////////////////////////////
+
+  // this function displays all the employees
+function showAllRoles() {
+    connection.query('Select * from role', (err, res)=>{
+         if (err){
+             console.log(err)
+         }else {
+             console.table(res)
+         }
+     })
+ }
+
+  // this function displays all the employees
+function showAllDepartments() {
+    connection.query(`Select * from employee where role_id = ${mangr}`, (err, res)=>{
+         if (err){
+             console.log(err)
+         }else {
+             console.table(res)
+         }
+     })
+ }
 
 // this function adds an employee
 async function addEmployee() {
@@ -136,7 +233,25 @@ function userInteractionPrompt() {
         .then((response) => {
             console.log(response)
             // user selects what action for the application to take
-            if (response.whatWouldUserLikeToDo === 'Add Employee') {
+            if (response.whatWouldUserLikeToDo === 'View Employees') {
+                showAllEmployees();
+            } 
+            
+            else if (response.whatWouldUserLikeToDo === 'View Employees by Role') {
+                showAllEmployeesByDepartment(x);
+
+
+            } else if (response.whatWouldUserLikeToDo === 'View Employees by Manager') {
+                showAllEmployeesByManager(x);
+            } 
+
+            // else if (response.whatWouldUserLikeToDo === 'View All Roles') {
+            //     showAllRoles();
+            // } else if (response.whatWouldUserLikeToDo === 'View All Departments') {
+            //     showAllDepartments();
+            // }
+            
+            else if (response.whatWouldUserLikeToDo === 'Add Employee') {
                 addEmployee();
             } else if (response.whatWouldUserLikeToDo === 'View Employees') {
                 showAllEmployees();
