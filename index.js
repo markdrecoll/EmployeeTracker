@@ -148,42 +148,33 @@ async function showAllEmployeesByDepartment() {
     // await getAllDepartments();
 
     try {
-        const departments = await connection.query('SELECT * FROM department', (err, res) => {
+        const departments = await connection.query('SELECT * FROM department');
 
-            // the fourth add employee question has the choices array populated with employees
-            showEmployeeByDepartmentQuestion[0].choices = [];
-            //console.log('Here is the list of all the departments', res)
-            // each department is pushed to the choices
-            for (let i = 0; i < res.length; i++) {
-                
-                showEmployeeByDepartmentQuestion.choices[0].push({name: `${res[i].name}`, value: `${res[i].id}`});
-            }
-           // allEmp = addEmployeeQuestions[3].choices;
-            // returns an error if there are no employees
-            if (!departments) {
-                console.log('no departments error')
-            }
+        showEmployeeByDepartmentQuestion[0].choices = [];
+         // each department is pushed to the choices
+        for (let i = 0; i < departments.length; i++) {
+        showEmployeeByDepartmentQuestion[0].choices.push({name: `${departments[i].name}`, value: `${departments[i].id}`});
+    }
 
-            
-
-
-        })
+            // returns an error if there are no departments
+        //     if (!departments) {
+        //         console.log('no departments error')
+        //     }
+        // })
     } catch (err) {
         throw err;
     }
 
-    console.log(showEmployeeByDepartmentQuestion.choices);
-
     let departmentChoice;
 
-    // inquirer
-    //     .prompt(showEmployeeByDepartmentQuestion)
-    //     .then((response) => {            
-    //         console.log(response);
-    //         departmentChoice = parseInt(response.charAt(0));
-    //     })
-    //     .catch((err) => {
-    //         console.log(err);
+    inquirer
+        .prompt(showEmployeeByDepartmentQuestion)
+        .then((response) => {            
+            console.log(response);
+            // departmentChoice = parseInt(response.charAt(0));
+        })
+        .catch((err) => {
+            console.log(err);
     //     })
 
     // connection.query(`Select * from employee where id = ${departmentChoice}`, (err, res)=>{
@@ -195,8 +186,7 @@ async function showAllEmployeesByDepartment() {
     // })
 
     userInteractionPrompt();
-
-
+        })
  }
 
  //////////////////////////////////////////// END OF EMPLOYEE BY DEPARTMENT
