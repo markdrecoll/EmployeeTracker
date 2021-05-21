@@ -17,19 +17,61 @@ const whatWouldUserLikeToDoArray = [
     {
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['View Employees',
+        choices: ['View Departments',
+            'View Roles',
+            'View Employees',
             'View Employees by Department',
             // 'View Employees by Manager',
-            'View All Roles',
-            'View All Departments',
-            'Add Employee',
             'Add Department',
             'Add Role',
-            'Remove Employee',
+            'Add Employee',
+            // 'Remove Department',
+            // 'Remove Role',
+            // 'Remove Employee',
             'Update Employee Role',
-            'Update Employee Manager',
+            // 'Update Employee Manager',
+            // 'View budget of a Department',
             'Exit'],
         name: 'whatWouldUserLikeToDo'
+    }
+]
+
+// this is the show employees by department prompt question
+let showEmployeeByDepartmentQuestion = [
+    {
+        type: 'list',
+        message: "What department do you want employees from?",
+        name: 'department_choice',
+        choices: []
+    }
+]
+
+// this prompts for add department info
+let addDepartmentQuestion = [
+    {
+        type: 'input',
+        message: "What is the name of the department you would like to add?",
+        name: 'name'
+    }
+]
+
+// this prompts for add role info
+let addRoleQuestions = [
+    {
+        type: 'input',
+        message: "What is the name of the role you would like to add?",
+        name: 'title'
+    },
+    {
+        type: 'input',
+        message: "What is the salary for the role?",
+        name: 'salary'
+    },
+    {
+        type: 'list',
+        message: "What department would you like to add this role to?",
+        choices: [],
+        name: 'department_id'
     }
 ]
 
@@ -59,121 +101,98 @@ let addEmployeeQuestions = [
     }
 ]
 
-// this is the show employees by department prompt question
-let showEmployeeByDepartmentQuestion = [
-    {
-        type: 'list',
-        message: "What department do you want employees from?",
-        name: 'department_choice',
-        choices: []
-    }
-]
-let addRoleQuestions = [
-    {
-        type: 'input',
-        message: "What is the name of the role you would like to add?",
-        name: 'title'
-    },
-    {
-        type: 'input',
-        message: "What is the salary for the role?",
-        name: 'salary'
-    },
-    {
-        type: 'list',
-        message: "What department would you like to add this role to?",
-        choices: [],
-        name: 'department_id'
-    }
-]
-
-// this function gets all the employees
-async function getAllEmployees() {
-    try {
-        const employees = await connection.query('SELECT * FROM employee', (err, res) => {
-            if (err) throw err;
-
-            // the fourth add employee question has the choices array populated with employees
-            addEmployeeQuestions[3].choices = [];
-            
-            // each employee is pushed to the manager question of the add employee questions
-            for (let i = 0; i < res.length; i++) {
-                addEmployeeQuestions[3].choices.push(`${i+1}.${res[i].first_name} ${res[i].last_name}`);
-            }
-
-            // returns an error if there are no employees
-            if (!employees) {
-                console.log('no employees error')
-            }
-        })
-    } catch (err) {
-        throw err;
-    }
-}
-
-// this function displays all the employees
-function showAllEmployees() {
-   connection.query('Select * from employee', (err, res)=>{
-        if (err){
+// this function displays all the departments
+function showDepartments() {
+    connection.query('Select * from department', (err, res) => {
+        if (err) {
             console.log(err)
-        }else {
+        } else {
             console.table(res)
         }
     })
     userInteractionPrompt();
 }
 
-// this function gets all the employees
-async function getAllDepartments() {
-    try {
-        const departments = await connection.query('SELECT * FROM department', (err, res) => {
-            if (err) throw err;
-
-            // clears out the department options in case this has been called before
-            showEmployeeByDepartmentQuestion[0].choices = [];
-
-            // each department is pushed to the choices
-            for (let i = 0; i < res.length; i++) {
-                showEmployeeByDepartmentQuestion[0].choices.push(`${i+1}.${res[i].name}`);
-            }
-
-            // returns an error if there are no departments
-            if (!departments) {
-                console.log('no departments error')
-            }
-        })
-    } catch (err) {throw err;}
+// this function displays all the roles
+function showRoles() {
+    connection.query('Select * from role', (err, res) => {
+        if (err) {
+            console.log(err)
+        } else {
+            console.table(res)
+        }
+    })
+    userInteractionPrompt();
 }
 
+// this function displays all the employees
+function showAllEmployees() {
+    connection.query('Select * from employee', (err, res) => {
+        if (err) {
+            console.log(err)
+        } else {
+            console.table(res)
+        }
+    })
+    userInteractionPrompt();
+}
+
+// this function displays all the employees in a given department
+async function showAllEmployeesByDepartment() {
+
+    // create connection
+    let promiseConn = connection;
+    promiseConn.query = util.promisify(promiseConn.query);
+
+    try {
+        // get all departments from SQL database
+        const departments = await promiseConn.query('SELECT * FROM department');
+    } catch (err) { throw err; }
+
+    // ask the user what department they would like to see employees from
+    inquirer
+        .prompt(showEmployeeByDepartmentQuestion)
+        .then(async (response) => {
+
+            // the users response is what department is chosen
+            let departmentChoice = (response.department_choice);
+
+            // get all employees where their department id is equal to what was chosen (utilize two left joins)
+            const employeesFromDepartment = await promiseConn.query(`SELECT * FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id WHERE department.id = ?;`, departmentChoice)
+            console.table(employeesFromDepartment);
+        })
+        .catch((err) => {
+            console.log(err);
+        })
+
+    // after action is complete, return to user menu
+    // userInteractionPrompt();
+}
+
+// this function displays all the employees with a given manager
+function showAllEmployeesByManager() { }
+
 // this function adds a department
-function addDepartment(){
+function addDepartment() {
 
     // ask the user for info on the department being added then insert that department into database
     inquirer
-        .prompt([
-            {
-                type: 'input',
-                message: "What is the name of the department you would like to add?",
-                name: 'name'
-            }
-        ])
+        .prompt(addDepartmentQuestion)
         .then((response) => {
             console.log(response);
-            connection.query("INSERT INTO department SET ?", response, (err, res)=>{
-                if(err){
+            connection.query("INSERT INTO department SET ?", response, (err, res) => {
+                if (err) {
                     console.log(err)
-                }else {
+                } else {
                     console.log('Department added.');
                     userInteractionPrompt();
                 }
             })
-        }).catch(err => {
-            console.log(err);
-        })
+        }).catch(err => { console.log(err); })
 }
 
 // this function adds a role
-async function addRole(){
+async function addRole() {
 
     // create connection
     let promiseConn = connection;
@@ -197,91 +216,42 @@ async function addRole(){
     inquirer
         .prompt(addRoleQuestions)
         .then((response) => {
-            
+
             // create connection to database, add in the new role
-            connection.query("INSERT INTO role SET ?", response, (err, res)=>{
-                if(err){
+            connection.query("INSERT INTO role SET ?", response, (err, res) => {
+                if (err) {
                     console.log(err)
-                }else {
+                } else {
                     console.log('Role added.');
                     userInteractionPrompt();
                 }
             })
-        }).catch(err => {
-            console.log(err);
-        })
+        }).catch(err => { console.log(err); })
 }
 
-// this function displays all the employees
-async function showAllEmployeesByDepartment() {
-
-    let promiseConn = connection;
-    promiseConn.query = util.promisify(promiseConn.query);
-
+// this function gets all the employees for the add employees
+async function getAllEmployees() {
     try {
-        // get all departments from SQL database
-        const departments = await promiseConn.query('SELECT * FROM department');
+        const employees = await connection.query('SELECT * FROM employee', (err, res) => {
+            if (err) throw err;
 
-        
+            // the fourth add employee question has the choices array populated with employees
+            addEmployeeQuestions[3].choices = [];
+
+            // each employee is pushed to the manager question of the add employee questions
+            for (let i = 0; i < res.length; i++) {
+                addEmployeeQuestions[3].choices.push(`${i + 1}.${res[i].first_name} ${res[i].last_name}`);
+            }
+
+            // returns an error if there are no employees
+            if (!employees) {
+                console.log('no employees error')
+            }
+        })
     } catch (err) {
         throw err;
     }
-
-    // ask the user what department they would like to see employees from
-    inquirer
-        .prompt(showEmployeeByDepartmentQuestion)
-        .then( async (response) => {
-            
-            console.log(response);
-
-            // the users response is what department is chosen
-            let departmentChoice = (response.department_choice);
-
-            // get all employees where their department id is equal to what was chosen (utilize two left joins)
-            const employeesFromDepartment = await promiseConn.query(`SELECT * FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id WHERE department.id = ?;`, departmentChoice)
-            console.table(employeesFromDepartment);
-            
-        })
-        .catch((err) => {
-            console.log(err);    
-        })
-        
-        // after action is complete, return to user menu
-        // userInteractionPrompt();
- }
-
- // this function displays all the employees
-function showAllEmployeesByRole(role) {
-    connection.query(`Select * from employee where role_id = ${role}`, (err, res)=>{
-         if (err){
-             console.log(err)
-         }else {
-             console.table(res)
-         }
-     })
- }
-
-// this function displays all the roles
-function showAllRoles() {
-    connection.query('Select * from role', (err, res)=>{
-         if (err){
-             console.log(err)
-         }else {
-             console.table(res)
-         }
-     })
- }
-
-  // this function displays all departments
-function showAllDepartments() {
-    connection.query(`Select * from employee where role_id = ${mangr}`, (err, res)=>{
-         if (err){
-             console.log(err)
-         }else {
-             console.table(res)
-         }
-     })
- }
+}
 
 // this function adds an employee
 async function addEmployee() {
@@ -295,6 +265,7 @@ async function addEmployee() {
         .prompt(addEmployeeQuestions)
         .then((response) => {
 
+            // establish a new employee with given data
             let newEmployee = {
                 first_name: response.first_name,
                 last_name: response.last_name,
@@ -302,58 +273,89 @@ async function addEmployee() {
                 manager_id: parseInt(response.manager_id.charAt(0))
             }
 
-            connection.query("INSERT INTO employee SET ?", newEmployee, (err, res)=>{
-                if(err){
+            // insert the employee into the database
+            connection.query("INSERT INTO employee SET ?", newEmployee, (err, res) => {
+                if (err) {
                     console.log(err)
-                }else {
+                } else {
                     console.log('Employee Added');
                     userInteractionPrompt();
                 }
             })
-        }).catch(err => {
-            console.log(err);
-        })
-        
+        }).catch(err => { console.log(err); })
 }
 
+// this function deletes a department
+function deleteDepartment() { }
+
+// this function deletes a role
+function deleteRole() { }
+
+// this function deletes an employee
+function deleteEmployee() { }
+
+// this function updates an employee's role
+function updateEmployeeRole() {
+    userInteractionPrompt();
+}
+
+// this function updates an employee's manager
+function updateEmployeeManager() { }
+
+// this function views the sum of the salaries in a department
+function viewDepartmentBudget() { }
+
+// this function is the main menu for what the user would like to do
 function userInteractionPrompt() {
     inquirer
         .prompt(whatWouldUserLikeToDoArray)
         .then((response) => {
-            console.log(response)
-            // user selects what action for the application to take
-            if (response.whatWouldUserLikeToDo === 'View Employees') {
+
+            // this long if statement has all user choice options
+
+            if (response.whatWouldUserLikeToDo === 'View Departments') {
+                showDepartments();
+            }
+            else if (response.whatWouldUserLikeToDo === 'View Roles') {
+                showRoles();
+            }
+            else if (response.whatWouldUserLikeToDo === 'View Employees') {
                 showAllEmployees();
-            } 
-            
+            }
             else if (response.whatWouldUserLikeToDo === 'View Employees by Department') {
                 showAllEmployeesByDepartment();
             }
-
-            else if(response.whatWouldUserLikeToDo === 'Add Department'){
+            // else if (response.whatWouldUserLikeToDo === 'View Employees by Manager'){
+            //     showAllEmployeesByManager();
+            // }
+            else if (response.whatWouldUserLikeToDo === 'Add Department') {
                 addDepartment();
             }
-
-            else if(response.whatWouldUserLikeToDo === 'Add Role'){
+            else if (response.whatWouldUserLikeToDo === 'Add Role') {
                 addRole();
             }
-
-
-            // } else if (response.whatWouldUserLikeToDo === 'View Employees by Manager') {
-            //     showAllEmployeesByManager(x);
-            // } 
-
-            // else if (response.whatWouldUserLikeToDo === 'View All Roles') {
-            //     showAllRoles();
-            // } else if (response.whatWouldUserLikeToDo === 'View All Departments') {
-            //     showAllDepartments();
-            // }
-            
             else if (response.whatWouldUserLikeToDo === 'Add Employee') {
                 addEmployee();
-            } else if (response.whatWouldUserLikeToDo === 'View Employees') {
-                showAllEmployees();
-            } else if (response.whatWouldUserLikeToDo !== 'Exit') {
+            }
+            // else if (response.whatWouldUserLikeToDo === 'Remove Department'){
+            //     deleteDepartment();
+            // }
+            // else if (response.whatWouldUserLikeToDo === 'Remove Role'){
+            //     deleteRole();
+            // }
+            // else if (response.whatWouldUserLikeToDo === 'Remove Employee'){
+            //     deleteEmployee();
+            // }
+            else if (response.whatWouldUserLikeToDo === 'Update Employee Role') {
+                updateEmployeeRole();
+            }
+            // else if (response.whatWouldUserLikeToDo === 'Update Employee Manager'){
+            //     updateEmployeeManager();
+            // }
+            // else if (response.whatWouldUserLikeToDo === 'View budget of a Department'){
+            //     viewDepartmentBudget();
+            // }
+            else if (response.whatWouldUserLikeToDo !== 'Exit') {
                 // console.log("User choice selected.");
                 userInteractionPrompt();
             }
