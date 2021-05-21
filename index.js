@@ -119,12 +119,12 @@ async function getAllDepartments() {
             if (err) throw err;
 
             // the fourth add employee question has the choices array populated with employees
-            showEmployeeByDepartmentQuestion.choices = [];
+            showEmployeeByDepartmentQuestion[0].choices = [];
             //console.log('Here is the list of all the departments', res)
             // each department is pushed to the choices
             for (let i = 0; i < res.length; i++) {
                 
-                showEmployeeByDepartmentQuestion.choices.push(`${i+1}.${res[i].name}`);
+                showEmployeeByDepartmentQuestion[0].choices.push(`${i+1}.${res[i].name}`);
             }
            // allEmp = addEmployeeQuestions[3].choices;
             // returns an error if there are no employees
@@ -149,15 +149,14 @@ async function showAllEmployeesByDepartment() {
 
     try {
         const departments = await connection.query('SELECT * FROM department', (err, res) => {
-            if (err) throw err;
 
             // the fourth add employee question has the choices array populated with employees
-            showEmployeeByDepartmentQuestion.choices = [];
+            showEmployeeByDepartmentQuestion[0].choices = [];
             //console.log('Here is the list of all the departments', res)
             // each department is pushed to the choices
             for (let i = 0; i < res.length; i++) {
                 
-                showEmployeeByDepartmentQuestion.choices.push({name: `${res[i].name}`, value: `${res[i].id}`});
+                showEmployeeByDepartmentQuestion.choices[0].push({name: `${res[i].name}`, value: `${res[i].id}`});
             }
            // allEmp = addEmployeeQuestions[3].choices;
             // returns an error if there are no employees
