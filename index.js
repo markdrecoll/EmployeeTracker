@@ -19,11 +19,12 @@ const whatWouldUserLikeToDoArray = [
         message: 'What would you like to do?',
         choices: ['View Employees',
             'View Employees by Department',
-            'View Employees by Manager',
+            // 'View Employees by Manager',
             'View All Roles',
             'View All Departments',
             'Add Employee',
             'Add Department',
+            'Add Role',
             'Remove Employee',
             'Update Employee Role',
             'Update Employee Manager',
@@ -65,6 +66,24 @@ let showEmployeeByDepartmentQuestion = [
         message: "What department do you want employees from?",
         name: 'department_choice',
         choices: []
+    }
+]
+let addRoleQuestions = [
+    {
+        type: 'input',
+        message: "What is the name of the role you would like to add?",
+        name: 'title'
+    },
+    {
+        type: 'input',
+        message: "What is the salary for the role?",
+        name: 'salary'
+    },
+    {
+        type: 'list',
+        message: "What department would you like to add this role to?",
+        choices: [],
+        name: 'department_id'
     }
 ]
 
@@ -126,6 +145,73 @@ async function getAllDepartments() {
     } catch (err) {throw err;}
 }
 
+// this function adds a department
+function addDepartment(){
+
+    // ask the user for info on the department being added then insert that department into database
+    inquirer
+        .prompt([
+            {
+                type: 'input',
+                message: "What is the name of the department you would like to add?",
+                name: 'name'
+            }
+        ])
+        .then((response) => {
+            console.log(response);
+            connection.query("INSERT INTO department SET ?", response, (err, res)=>{
+                if(err){
+                    console.log(err)
+                }else {
+                    console.log('Department added.');
+                    userInteractionPrompt();
+                }
+            })
+        }).catch(err => {
+            console.log(err);
+        })
+}
+
+// this function adds a role
+async function addRole(){
+
+    // create connection
+    let promiseConn = connection;
+    promiseConn.query = util.promisify(promiseConn.query);
+
+    // initialize empty array for departments
+    let departments = [];
+
+    // get all departments from SQL database
+    departments = await promiseConn.query('SELECT * FROM department');
+
+    // clears out the department options in case this has been called before
+    addRoleQuestions[2].choices = [];
+
+    // each department is pushed to the choices
+    for (let i = 0; i < departments.length; i++) {
+        addRoleQuestions[2].choices.push({ name: `${departments[i].name}`, value: `${departments[i].id}` });
+    }
+
+    // prompt user the addRoleQuestions and insert response into database
+    inquirer
+        .prompt(addRoleQuestions)
+        .then((response) => {
+            
+            // create connection to database, add in the new role
+            connection.query("INSERT INTO role SET ?", response, (err, res)=>{
+                if(err){
+                    console.log(err)
+                }else {
+                    console.log('Role added.');
+                    userInteractionPrompt();
+                }
+            })
+        }).catch(err => {
+            console.log(err);
+        })
+}
+
 // this function displays all the employees
 async function showAllEmployeesByDepartment() {
 
@@ -136,13 +222,7 @@ async function showAllEmployeesByDepartment() {
         // get all departments from SQL database
         const departments = await promiseConn.query('SELECT * FROM department');
 
-        // clears out the department options in case this has been called before
-        showEmployeeByDepartmentQuestion[0].choices = [];
-
-        // each department is pushed to the choices
-        for (let i = 0; i < departments.length; i++) {
-            showEmployeeByDepartmentQuestion[0].choices.push({ name: `${departments[i].name}`, value: `${departments[i].id}` });
-        }
+        
     } catch (err) {
         throw err;
     }
@@ -248,11 +328,20 @@ function userInteractionPrompt() {
             
             else if (response.whatWouldUserLikeToDo === 'View Employees by Department') {
                 showAllEmployeesByDepartment();
+            }
+
+            else if(response.whatWouldUserLikeToDo === 'Add Department'){
+                addDepartment();
+            }
+
+            else if(response.whatWouldUserLikeToDo === 'Add Role'){
+                addRole();
+            }
 
 
-            } else if (response.whatWouldUserLikeToDo === 'View Employees by Manager') {
-                showAllEmployeesByManager(x);
-            } 
+            // } else if (response.whatWouldUserLikeToDo === 'View Employees by Manager') {
+            //     showAllEmployeesByManager(x);
+            // } 
 
             // else if (response.whatWouldUserLikeToDo === 'View All Roles') {
             //     showAllRoles();
