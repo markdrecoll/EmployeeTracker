@@ -155,10 +155,10 @@ async function showAllEmployeesByDepartment() {
             console.log(response);
 
             // the users response is what department is chosen
-            departmentChoice = (response);
+            let departmentChoice = (response.department_choice);
 
             // get all employees where their department id is equal to what was chosen (utilize two left joins)
-            const employeesFromDepartment = await promiseConn.query(`SELECT * FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id WHERE department.id = ${departmentChoice}`)
+            const employeesFromDepartment = await promiseConn.query(`SELECT * FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id WHERE department.id = ?;`, departmentChoice)
             console.table(employeesFromDepartment);
             
         })
