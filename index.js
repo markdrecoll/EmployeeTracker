@@ -11,8 +11,8 @@ const connection = mysql.createConnection({
     password: '19cavalryarcher',
     database: 'employeetracker_db'
 })
-connection.connect();
-connection.query = util.promisify(connection.query);
+// connection.connect();
+// connection.query = util.promisify(connection.query);
 
 
 
@@ -59,7 +59,7 @@ let addEmployeeQuestions = [
     {
         type: 'list',
         message: "What is the employee's role?",
-        choices: ['1.Sales Lead', '2.Salesperson', '3.Lead Engineer', '4. Software Engineer', '5. Accountant', '6. Legal Team Lead', '7. Attorney'],
+        choices: ['1.Sales Lead', '2.Salesperson', '3.Lead Engineer', '4.Software Engineer', '5.Accountant', '6.Legal Team Lead', '7.Attorney'],
         name: 'role_id'
     },
     {
@@ -148,19 +148,16 @@ async function showAllEmployeesByDepartment() {
     // await getAllDepartments();
 
     try {
+        // get all departments from SQL database
         const departments = await connection.query('SELECT * FROM department');
 
+        // clears out the department options in case this has been called before
         showEmployeeByDepartmentQuestion[0].choices = [];
+
          // each department is pushed to the choices
         for (let i = 0; i < departments.length; i++) {
-        showEmployeeByDepartmentQuestion[0].choices.push({name: `${departments[i].name}`, value: `${departments[i].id}`});
-    }
-
-            // returns an error if there are no departments
-        //     if (!departments) {
-        //         console.log('no departments error')
-        //     }
-        // })
+            showEmployeeByDepartmentQuestion[0].choices.push({name: `${departments[i].name}`, value: `${departments[i].id}`});
+        }
     } catch (err) {
         throw err;
     }
