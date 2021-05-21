@@ -143,13 +143,13 @@ async function getAllDepartments() {
 
 // this function displays all the employees
 async function showAllEmployeesByDepartment() {
-    // console.log('Before getting all departments')
-    // //const departments = await getAllDepartments();
-    // await getAllDepartments();
+
+    let promiseConn = connection;
+    promiseConn.query = util.promisify(promiseConn.query);
 
     try {
         // get all departments from SQL database
-        const departments = await connection.query('SELECT * FROM department');
+        const departments = await promiseConn.query('SELECT * FROM department');
 
         // clears out the department options in case this has been called before
         showEmployeeByDepartmentQuestion[0].choices = [];
@@ -247,14 +247,13 @@ async function addEmployee() {
                     console.log(err)
                 }else {
                     console.log('Employee Added');
-                  
+                    userInteractionPrompt();
                 }
             })
-
         }).catch(err => {
             console.log(err);
         })
-        // userInteractionPrompt();
+        
 }
 
 function userInteractionPrompt() {
