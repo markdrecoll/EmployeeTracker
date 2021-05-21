@@ -2,7 +2,7 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql');
 const util = require('util');
-//let allEmp = [];
+
 // this creates a connection to the local database
 const connection = mysql.createConnection({
     host: 'localhost',
@@ -11,19 +11,7 @@ const connection = mysql.createConnection({
     password: '19cavalryarcher',
     database: 'employeetracker_db'
 })
-// connection.connect();
-// connection.query = util.promisify(connection.query);
 
-
-
-let showEmployeeByDepartmentQuestion = [
-    {
-        type: 'list',
-        message: "What department do you want employees from?",
-        name: 'department_id',
-        choices: []
-    }
-]
 // these are the options for what action the user wants to take
 const whatWouldUserLikeToDoArray = [
     {
@@ -70,6 +58,16 @@ let addEmployeeQuestions = [
     }
 ]
 
+// this is the show employees by department prompt question
+let showEmployeeByDepartmentQuestion = [
+    {
+        type: 'list',
+        message: "What department do you want employees from?",
+        name: 'department_choice',
+        choices: []
+    }
+]
+
 // this function gets all the employees
 async function getAllEmployees() {
     try {
@@ -81,16 +79,13 @@ async function getAllEmployees() {
             
             // each employee is pushed to the manager question of the add employee questions
             for (let i = 0; i < res.length; i++) {
-                
                 addEmployeeQuestions[3].choices.push(`${i+1}.${res[i].first_name} ${res[i].last_name}`);
             }
-           // allEmp = addEmployeeQuestions[3].choices;
+
             // returns an error if there are no employees
             if (!employees) {
                 console.log('no employees error')
             }
-
-            //return employees;
         })
     } catch (err) {
         throw err;
@@ -109,37 +104,27 @@ function showAllEmployees() {
     userInteractionPrompt();
 }
 
-////////////////////////////////////////////////////////// EMPLOYEE BY DEPARTMENT
-// THIS IS BEING WORKED ON
-
 // this function gets all the employees
 async function getAllDepartments() {
     try {
         const departments = await connection.query('SELECT * FROM department', (err, res) => {
             if (err) throw err;
 
-            // the fourth add employee question has the choices array populated with employees
+            // clears out the department options in case this has been called before
             showEmployeeByDepartmentQuestion[0].choices = [];
-            //console.log('Here is the list of all the departments', res)
+
             // each department is pushed to the choices
             for (let i = 0; i < res.length; i++) {
-                
                 showEmployeeByDepartmentQuestion[0].choices.push(`${i+1}.${res[i].name}`);
             }
-           // allEmp = addEmployeeQuestions[3].choices;
-            // returns an error if there are no employees
+
+            // returns an error if there are no departments
             if (!departments) {
                 console.log('no departments error')
             }
-
-            //return employees;
         })
-    } catch (err) {
-        throw err;
-    }
-//    console.log(await connection.query('SELECT * FROM department'));
+    } catch (err) {throw err;}
 }
-
 
 // this function displays all the employees
 async function showAllEmployeesByDepartment() {
@@ -154,39 +139,36 @@ async function showAllEmployeesByDepartment() {
         // clears out the department options in case this has been called before
         showEmployeeByDepartmentQuestion[0].choices = [];
 
-         // each department is pushed to the choices
+        // each department is pushed to the choices
         for (let i = 0; i < departments.length; i++) {
-            showEmployeeByDepartmentQuestion[0].choices.push({name: `${departments[i].name}`, value: `${departments[i].id}`});
+            showEmployeeByDepartmentQuestion[0].choices.push({ name: `${departments[i].name}`, value: `${departments[i].id}` });
         }
     } catch (err) {
         throw err;
     }
 
-    let departmentChoice;
-
+    // ask the user what department they would like to see employees from
     inquirer
         .prompt(showEmployeeByDepartmentQuestion)
-        .then((response) => {            
+        .then( async (response) => {
+            
             console.log(response);
-            // departmentChoice = parseInt(response.charAt(0));
+
+            // the users response is what department is chosen
+            departmentChoice = (response);
+
+            // get all employees where their department id is equal to what was chosen (utilize two left joins)
+            const employeesFromDepartment = await promiseConn.query(`SELECT * FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id WHERE department.id = ${departmentChoice}`)
+            console.table(employeesFromDepartment);
+            
         })
         .catch((err) => {
-            console.log(err);
-    //     })
-
-    // connection.query(`Select * from employee where id = ${departmentChoice}`, (err, res)=>{
-    //      if (err){
-    //          console.log(err);
-    //      }else {
-    //         console.table(res);
-    //      }
-    // })
-
-    userInteractionPrompt();
+            console.log(err);    
         })
+        
+        // after action is complete, return to user menu
+        // userInteractionPrompt();
  }
-
- //////////////////////////////////////////// END OF EMPLOYEE BY DEPARTMENT
 
  // this function displays all the employees
 function showAllEmployeesByRole(role) {
@@ -199,9 +181,7 @@ function showAllEmployeesByRole(role) {
      })
  }
 
- ////////////////////////////////////////////////////
-
-  // this function displays all the employees
+// this function displays all the roles
 function showAllRoles() {
     connection.query('Select * from role', (err, res)=>{
          if (err){
@@ -212,7 +192,7 @@ function showAllRoles() {
      })
  }
 
-  // this function displays all the employees
+  // this function displays all departments
 function showAllDepartments() {
     connection.query(`Select * from employee where role_id = ${mangr}`, (err, res)=>{
          if (err){
