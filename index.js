@@ -96,10 +96,27 @@ let addEmployeeQuestions = [
     {
         type: 'list',
         message: "Who is the employee's manager?",
-        choices: [],
+        choices: ['None'],
         name: 'manager_id'
     }
 ]
+
+// this prompts for update employee info
+let updateCertainEmployeeQuestion = [
+    {
+        type:"list",
+        name:"listOfEmp",
+        message:"Pick emp to update",
+        choices:[]
+    },
+    {
+        type:"list",
+        name:"listOfRoles",
+        message:"Pick a new role for employee.",
+        choices:[]
+    }
+]
+
 
 // this function displays all the departments
 function showDepartments() {
@@ -147,12 +164,20 @@ async function showAllEmployeesByDepartment() {
     try {
         // get all departments from SQL database
         const departments = await promiseConn.query('SELECT * FROM department');
+
+        // each department is pushed to the choices
+        for (let i = 0; i < departments.length; i++) {
+            showEmployeeByDepartmentQuestion[0].choices.push({ name: `${departments[i].name}`, value: `${departments[i].id}` });
+        }
+
+        
     } catch (err) { throw err; }
 
     // ask the user what department they would like to see employees from
     inquirer
         .prompt(showEmployeeByDepartmentQuestion)
         .then(async (response) => {
+            console.log(response);
 
             // the users response is what department is chosen
             let departmentChoice = (response.department_choice);
@@ -295,8 +320,39 @@ function deleteRole() { }
 function deleteEmployee() { }
 
 // this function updates an employee's role
-function updateEmployeeRole() {
-    userInteractionPrompt();
+async function updateEmployeeRole() {
+
+    // create connection
+    let promiseConn = connection;
+    promiseConn.query = util.promisify(promiseConn.query);
+
+     // get all departments from SQL database
+     let employees = await promiseConn.query('SELECT * FROM employee');
+     let roles = await promiseConn.query('SELECT * FROM role');
+
+            // each employee is pushed to the manager question of the add employee questions
+            for (let i = 0; i < employees.length; i++) {
+                updateCertainEmployeeQuestion[0].choices.push(`${employees[i].id} ${employees[i].first_name} ${employees[i].last_name}`);
+            }
+
+             // each employee is pushed to the manager question of the add employee questions
+             for (let i = 0; i < roles.length; i++) {
+                updateCertainEmployeeQuestion[1].choices.push(`${roles[i].id} ${roles[i].title}`);
+            }
+
+        inquirer
+            .prompt(updateCertainEmployeeQuestion)
+            .then((response) => {
+
+                let updateData = promiseConn.query(`UPDATE employee SET role_id = ${response.listOfRoles.split(" ")[0]} WHERE id = ${response.listOfEmp.split(" ")[0]}`);
+
+                updateData.then(data => {
+                    if(data){
+                        console.log(`Employee's role was changed to ${response.listOfRoles.split(" ")[1]} ${response.listOfRoles.split(" ")[2]} `)
+                    }
+                    userInteractionPrompt();
+                })
+            });
 }
 
 // this function updates an employee's manager
@@ -310,9 +366,7 @@ function userInteractionPrompt() {
     inquirer
         .prompt(whatWouldUserLikeToDoArray)
         .then((response) => {
-
-            // this long if statement has all user choice options
-
+            
             if (response.whatWouldUserLikeToDo === 'View Departments') {
                 showDepartments();
             }
