@@ -21,16 +21,10 @@ const whatWouldUserLikeToDoArray = [
             'View Roles',
             'View Employees',
             'View Employees by Department',
-            // 'View Employees by Manager',
             'Add Department',
             'Add Role',
             'Add Employee',
-            // 'Remove Department',
-            // 'Remove Role',
-            // 'Remove Employee',
             'Update Employee Role',
-            // 'Update Employee Manager',
-            // 'View budget of a Department',
             'Exit'],
         name: 'whatWouldUserLikeToDo'
     }
@@ -104,19 +98,18 @@ let addEmployeeQuestions = [
 // this prompts for update employee info
 let updateCertainEmployeeQuestion = [
     {
-        type:"list",
-        name:"listOfEmp",
-        message:"Pick emp to update",
-        choices:[]
+        type: "list",
+        name: "listOfEmp",
+        message: "Pick emp to update",
+        choices: []
     },
     {
-        type:"list",
-        name:"listOfRoles",
-        message:"Pick a new role for employee.",
-        choices:[]
+        type: "list",
+        name: "listOfRoles",
+        message: "Pick a new role for employee.",
+        choices: []
     }
 ]
-
 
 // this function displays all the departments
 function showDepartments() {
@@ -170,7 +163,7 @@ async function showAllEmployeesByDepartment() {
             showEmployeeByDepartmentQuestion[0].choices.push({ name: `${departments[i].name}`, value: `${departments[i].id}` });
         }
 
-        
+
     } catch (err) { throw err; }
 
     // ask the user what department they would like to see employees from
@@ -185,17 +178,12 @@ async function showAllEmployeesByDepartment() {
             // get all employees where their department id is equal to what was chosen (utilize two left joins)
             const employeesFromDepartment = await promiseConn.query(`SELECT * FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department on role.department_id = department.id WHERE department.id = ?;`, departmentChoice)
             console.table(employeesFromDepartment);
+            userInteractionPrompt();
         })
         .catch((err) => {
             console.log(err);
         })
-
-    // after action is complete, return to user menu
-    // userInteractionPrompt();
 }
-
-// this function displays all the employees with a given manager
-function showAllEmployeesByManager() { }
 
 // this function adds a department
 function addDepartment() {
@@ -310,15 +298,6 @@ async function addEmployee() {
         }).catch(err => { console.log(err); })
 }
 
-// this function deletes a department
-function deleteDepartment() { }
-
-// this function deletes a role
-function deleteRole() { }
-
-// this function deletes an employee
-function deleteEmployee() { }
-
 // this function updates an employee's role
 async function updateEmployeeRole() {
 
@@ -326,47 +305,41 @@ async function updateEmployeeRole() {
     let promiseConn = connection;
     promiseConn.query = util.promisify(promiseConn.query);
 
-     // get all departments from SQL database
-     let employees = await promiseConn.query('SELECT * FROM employee');
-     let roles = await promiseConn.query('SELECT * FROM role');
+    // get all departments from SQL database
+    let employees = await promiseConn.query('SELECT * FROM employee');
+    let roles = await promiseConn.query('SELECT * FROM role');
 
-            // each employee is pushed to the manager question of the add employee questions
-            for (let i = 0; i < employees.length; i++) {
-                updateCertainEmployeeQuestion[0].choices.push(`${employees[i].id} ${employees[i].first_name} ${employees[i].last_name}`);
-            }
+    // each employee is pushed to the manager question of the add employee questions
+    for (let i = 0; i < employees.length; i++) {
+        updateCertainEmployeeQuestion[0].choices.push(`${employees[i].id} ${employees[i].first_name} ${employees[i].last_name}`);
+    }
 
-             // each employee is pushed to the manager question of the add employee questions
-             for (let i = 0; i < roles.length; i++) {
-                updateCertainEmployeeQuestion[1].choices.push(`${roles[i].id} ${roles[i].title}`);
-            }
+    // each employee is pushed to the manager question of the add employee questions
+    for (let i = 0; i < roles.length; i++) {
+        updateCertainEmployeeQuestion[1].choices.push(`${roles[i].id} ${roles[i].title}`);
+    }
 
-        inquirer
-            .prompt(updateCertainEmployeeQuestion)
-            .then((response) => {
+    inquirer
+        .prompt(updateCertainEmployeeQuestion)
+        .then((response) => {
 
-                let updateData = promiseConn.query(`UPDATE employee SET role_id = ${response.listOfRoles.split(" ")[0]} WHERE id = ${response.listOfEmp.split(" ")[0]}`);
+            let updateData = promiseConn.query(`UPDATE employee SET role_id = ${response.listOfRoles.split(" ")[0]} WHERE id = ${response.listOfEmp.split(" ")[0]}`);
 
-                updateData.then(data => {
-                    if(data){
-                        console.log(`Employee's role was changed to ${response.listOfRoles.split(" ")[1]} ${response.listOfRoles.split(" ")[2]} `)
-                    }
-                    userInteractionPrompt();
-                })
-            });
+            updateData.then(data => {
+                if (data) {
+                    console.log(`Employee's role was changed to ${response.listOfRoles.split(" ")[1]} ${response.listOfRoles.split(" ")[2]} `)
+                }
+                userInteractionPrompt();
+            })
+        });
 }
-
-// this function updates an employee's manager
-function updateEmployeeManager() { }
-
-// this function views the sum of the salaries in a department
-function viewDepartmentBudget() { }
 
 // this function is the main menu for what the user would like to do
 function userInteractionPrompt() {
     inquirer
         .prompt(whatWouldUserLikeToDoArray)
         .then((response) => {
-            
+
             if (response.whatWouldUserLikeToDo === 'View Departments') {
                 showDepartments();
             }
@@ -379,9 +352,6 @@ function userInteractionPrompt() {
             else if (response.whatWouldUserLikeToDo === 'View Employees by Department') {
                 showAllEmployeesByDepartment();
             }
-            // else if (response.whatWouldUserLikeToDo === 'View Employees by Manager'){
-            //     showAllEmployeesByManager();
-            // }
             else if (response.whatWouldUserLikeToDo === 'Add Department') {
                 addDepartment();
             }
@@ -391,26 +361,10 @@ function userInteractionPrompt() {
             else if (response.whatWouldUserLikeToDo === 'Add Employee') {
                 addEmployee();
             }
-            // else if (response.whatWouldUserLikeToDo === 'Remove Department'){
-            //     deleteDepartment();
-            // }
-            // else if (response.whatWouldUserLikeToDo === 'Remove Role'){
-            //     deleteRole();
-            // }
-            // else if (response.whatWouldUserLikeToDo === 'Remove Employee'){
-            //     deleteEmployee();
-            // }
             else if (response.whatWouldUserLikeToDo === 'Update Employee Role') {
                 updateEmployeeRole();
             }
-            // else if (response.whatWouldUserLikeToDo === 'Update Employee Manager'){
-            //     updateEmployeeManager();
-            // }
-            // else if (response.whatWouldUserLikeToDo === 'View budget of a Department'){
-            //     viewDepartmentBudget();
-            // }
             else if (response.whatWouldUserLikeToDo !== 'Exit') {
-                // console.log("User choice selected.");
                 userInteractionPrompt();
             }
         }
