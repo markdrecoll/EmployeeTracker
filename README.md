@@ -16,3 +16,10 @@
 
   GitHub: [markdrecoll](https://github.com/markdrecoll/)
   ## Demonstration
+https://user-images.githubusercontent.com/77694281/119600673-26a0db00-bdad-11eb-83cb-f127711552a4.mp4
+
+https://user-images.githubusercontent.com/77694281/119600680-2a346200-bdad-11eb-8154-9c543cfced3b.mp4
+
+https://user-images.githubusercontent.com/77694281/119600695-31f40680-bdad-11eb-8719-f1ab72e0ee2c.mp4
+
+https://user-images.githubusercontent.com/77694281/119600699-34566080-bdad-11eb-8049-247f393a8467.mp4
